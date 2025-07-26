@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Oracle Stored Procedure Executor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f8f9fa; }
+        .container { max-width: 480px; margin: 40px auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+        h2 { text-align: center; }
+        label { display: block; margin-top: 16px; }
+        input[type=text] { width: 100%; padding: 8px; margin-top: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { margin-top: 24px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        .result { margin-top: 24px; padding: 12px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Execute Oracle Stored Procedure</h2>
+    <form id="procForm">
+        <label for="procName">Procedure Name (optionally schema-qualified):</label>
+        <input type="text" name="procName" id="procName" required placeholder="e.g. MY_PROC or SCHEMA.MY_PROC" />
+        <button type="submit">Next</button>
+    </form>
+    <form id="paramForm" style="display:none;"></form>
+    <div id="result"></div>
+</div>
+<script>
+const procForm = document.getElementById('procForm');
+const paramForm = document.getElementById('paramForm');
+const resultDiv = document.getElementById('result');
+ 
+procForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const procName = document.getElementById('procName').value;
+    fetch(`/api/procedure/params?name=${encodeURIComponent(procName)}`)
+        .then(res => res.json())
+        .then(params => {
+            if (!params.length) {
+                paramForm.style.display = 'none';
+                resultDiv.innerHTML = '<div class="error">No IN parameters found or procedure not found.</div>';
+                return;
+            }
+            paramForm.innerHTML = `<input type="hidden" name="procName" value="${procName}" />`;
+            params.forEach(p => {
+                paramForm.innerHTML += `<label for="${p.name}">${p.name} (${p.type}):</label>` +
+                    `<input type="text" name="${p.name}" id="${p.name}" required />`;
+            });
+            paramForm.innerHTML += '<button type="submit">Execute Procedure</button>';
+            paramForm.style.display = '';
+            resultDiv.innerHTML = '';
+        });
+});
+ 
+paramForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(paramForm);
+    const params = {};
+    formData.forEach((v, k) => { if (k !== 'procName') params[k] = v; });
+    fetch(`/api/procedure/executeWithParams?name=${encodeURIComponent(formData.get('procName'))}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+    })
+    .then(res => res.json())
+    .then(data => {
+        resultDiv.innerHTML = `<div class="result ${data.success ? 'success' : 'error'}">${data.message}</div>`;
+    });
+});
+</script>
+</body>
+</html>
