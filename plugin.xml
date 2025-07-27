@@ -1,0 +1,19 @@
+<idea-plugin>
+    <id>com.example.projectnameprinter</id>
+    <name>Project Name Printer</name>
+    <vendor email="support@example.com" url="https://example.com">Example</vendor>
+    <description>
+        Simple plugin to print the project name in the console.
+    </description>
+    <version>1.0</version>
+    <idea-version since-build="232.0"/>
+    <depends>com.intellij.modules.platform</depends>
+    <extensions defaultExtensionNs="com.intellij">
+    </extensions>
+    <actions>
+        <action id="PrintProjectNameAction" class="com.example.projectnameprinter.PrintProjectNameAction"
+                text="Print Project Name" description="Prints the current project name to the console">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
